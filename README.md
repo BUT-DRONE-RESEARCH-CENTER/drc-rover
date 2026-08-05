@@ -1,4 +1,4 @@
-# ROS 2 Rover
+# DRC Rover
 
 ROS 2 Jazzy workspace for the Rover project.
 
