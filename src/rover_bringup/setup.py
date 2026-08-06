@@ -27,6 +27,10 @@ setup(
             glob('urdf/*'),
         ),
         (
+            os.path.join('share', package_name, 'worlds'),
+            glob('worlds/*'),
+        ),
+        (
             os.path.join('share', package_name, 'rviz'),
             glob('rviz/*'),
         ),
