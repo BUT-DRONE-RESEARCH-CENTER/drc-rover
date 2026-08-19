@@ -11,13 +11,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     nano \
     python3-colcon-common-extensions \
     libopencv-dev \
+    v4l-utils \
     ros-humble-cv-bridge \
     ros-humble-image-transport \
     ros-humble-mavros \
     ros-humble-mavros-extras \
     geographiclib-tools \
+    ros-humble-v4l2-camera \
     && /opt/ros/humble/lib/mavros/install_geographiclib_datasets.sh \
     && rm -rf /var/lib/apt/lists/*
+
+
 
 # Nastavení prostředí a aliasů
 RUN echo "source /opt/ros/humble/setup.bash" >> /root/.bashrc && \
