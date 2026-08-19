@@ -1,0 +1,33 @@
+services:
+  drone_companion:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: drone_companion
+    restart: unless-stopped
+    
+    # Síť a IPC
+    network_mode: host
+    ipc: host
+    shm_size: '512m'
+    
+    # Přístup k hardwaru (sériové porty pro FCU, USB kamery, GPIO)
+    privileged: true
+    
+    volumes:
+      # Mapování zdrojového kódu (případně celého ws)
+      - ../../src:/workspace:rw
+      # Přístup ke všem zařízením v /dev (ttyACM, ttyUSB, video*, i2c, spi)
+      - /dev:/dev:rw
+      # Zachování systémového času z hostitele (důležité pro časové značky zpráv)
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+      
+    environment:
+      - ROS_DOMAIN_ID=67
+      # Zajištění nebufferovaného výstupu z logů
+      - RCUTILS_LOGGING_BUFFERED_STREAM=1
+      - RCUTILS_COLORIZED_OUTPUT=1
+
+    # Udrží kontejner běžící na pozadí pro připojení přes docker exec
+    command: tail -f /dev/null
