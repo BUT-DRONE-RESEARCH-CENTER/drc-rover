@@ -25,6 +25,8 @@ services:
       
     environment:
       - ROS_DOMAIN_ID=67
+      - DISPLAY=$DISPLAY
+      - QT_X11_NO_MITSHM=1
       # Zajištění nebufferovaného výstupu z logů
       - RCUTILS_LOGGING_BUFFERED_STREAM=1
       - RCUTILS_COLORIZED_OUTPUT=1
