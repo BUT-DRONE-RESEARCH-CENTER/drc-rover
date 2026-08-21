@@ -16,7 +16,7 @@ ROS 2 Humble workspace for the Rover project.
 - `rosdep`
 
 ## Frequent commands
-Only folder for building packages is **~/rover_ws**!!!
+Only folder for building packages is **~/workspace**!!!
 ```bash
 cd ~/rover_ws
 ```
