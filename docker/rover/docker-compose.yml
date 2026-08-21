@@ -1,9 +1,9 @@
 services:
-  drone_companion:
+  drc_rover_container:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: drone_companion
+    container_name: drc_rover_container
     restart: unless-stopped
     
     # Síť a IPC
