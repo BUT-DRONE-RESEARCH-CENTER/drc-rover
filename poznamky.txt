@@ -1,0 +1,7 @@
+docker run -it --rm \
+  --net=host \
+  --privileged \
+  -e DISPLAY=$DISPLAY \
+  -v /tmp/.X11-unix:/tmp/.X11-unix \
+  -v /dev:/dev \
+  rover-drc_rover_container bash
