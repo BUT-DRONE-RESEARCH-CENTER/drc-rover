@@ -2,7 +2,7 @@ services:
   drc_rover_container:
     build:
       context: .
-      dockerfile: Dockerfile_test
+      dockerfile: Dockerfile
     container_name: drc_rover_container
     restart: unless-stopped
     
