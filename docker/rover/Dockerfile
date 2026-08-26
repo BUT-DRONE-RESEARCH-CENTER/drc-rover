@@ -30,9 +30,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ros-humble-mavros-extras \
     ros-humble-slam-toolbox \
     geographiclib-tools \
+    xtensor-dev \
+    libceres-dev \
+    libbullet-dev \
+    libgraphicsmagick++1-dev \
+    ros-humble-ompl \
+    ros-humble-behaviortree-cpp-v3 \
+    ros-humble-bondcpp \
+    ros-humble-angles \
+    ros-humble-diagnostics \
+    libnanoflann-dev \
+    ros-humble-twist-mux \
+    ros-humble-test-msgs \
     && /opt/ros/humble/lib/mavros/install_geographiclib_datasets.sh \
     && rm -rf /var/lib/apt/lists/*
-
 
 # RUN mkdir /workspace && mkdir /workspace/src && cd /workspace/src && git clone -b ros2 https://github.com/Slamtec/rplidar_ros.git 
 
@@ -48,10 +59,12 @@ RUN mkdir -p src && \
     git clone -b ros2 \
     https://github.com/Slamtec/rplidar_ros.git \
     src/rplidar_ros && \
-    git clone \
+    git clone -b ros2 \
     https://github.com/MAPIRlab/rf2o_laser_odometry.git \
     src/rf2o_laser_odometry && \
-    git clone \
+    git clone -b humble \
     https://github.com/ros-perception/vision_opencv \
-    src/opencv_vision
-    
+    src/vision_opencv && \
+    git clone -b humble \
+    https://github.com/ros-planning/navigation2.git \
+    src/navigation2

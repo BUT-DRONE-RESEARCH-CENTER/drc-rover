@@ -1,0 +1,34 @@
+ros-humble-twist-mux [sudo apt install ros-humble-twist-mux]
+ros-humble-navigation2 [git clone https://github.com/ros-planning/navigation2.git --branch humble]
+ros-humble-nav2-bringup (součástí nav2 package)
+ros-humble-test-msgs [sudo apt install ros-humble-test-msg]
+
+apt-get install -y \
+    xtensor-dev \
+    libceres-dev \
+    libbullet-dev \
+    libgraphicsmagick++1-dev \
+    ros-humble-ompl \
+    ros-humble-behaviortree-cpp-v3 \
+    ros-humble-bondcpp \
+    ros-humble-angles \
+    ros-humble-diagnostics \
+    libnanoflann-dev
+
+
+
+# Ověřte cestu k adresáři s hlavičkami
+CV_DIR=$(dirname $(find /workspace/src -name "cv_bridge.hpp" | head -n 1))
+
+# Vytvořte hlavičkový soubor cv_bridge.h
+cat << 'EOF' > "$CV_DIR/cv_bridge.h"
+#pragma once
+#include "cv_bridge/cv_bridge.hpp"
+EOF
+
+touch $(find /workspace/src -type d -name "nav2_system_tests")/COLCON_IGNORE
+
+cd /workspace
+colcon build --symlink-install \
+    --packages-ignore nav2_system_tests \
+    --cmake-args -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF \
