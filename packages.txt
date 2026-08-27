@@ -32,3 +32,10 @@ cd /workspace
 colcon build --symlink-install \
     --packages-ignore nav2_system_tests \
     --cmake-args -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF \
+
+colcon build --symlink-install \
+  --packages-ignore \
+    nav2_system_tests \
+    opencv_tests \
+    nav2_route \
+  --cmake-args -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF \
