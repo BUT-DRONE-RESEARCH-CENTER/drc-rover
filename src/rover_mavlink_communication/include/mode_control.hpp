@@ -1,0 +1,13 @@
+#ifndef ROVER_MAVLINK_COMMUNICATION__ROVER_CONTROL_MODE_HPP_
+#define ROVER_MAVLINK_COMMUNICATION__ROVER_CONTROL_MODE_HPP_
+
+enum class RoverControlMode
+{
+    UNKNOWN,
+    MANUAL,
+    GUIDED,
+    HOLD,
+    AUTO
+};
+
+#endif
