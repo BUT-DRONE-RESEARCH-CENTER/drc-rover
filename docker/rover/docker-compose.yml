@@ -20,18 +20,21 @@ services:
       - ../../src/rover_drone_following:/workspace/src/rover_drone_following:rw
       - ../../src/rover_mavlink_communication:/workspace/src/rover_mavlink_communication:rw
       - ../../src/rover_navigation:/workspace/src/rover_navigation:rw
-      #- ../../src/opencv_vision:/workspace/src/opencv_vison:rw
       
       # Přístup ke všem zařízením v /dev (ttyACM, ttyUSB, video*, i2c, spi)
       - /dev:/dev:rw
       # Zachování systémového času z hostitele (důležité pro časové značky zpráv)
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
+      # --- X11 GUI přístup ---
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - ~/.Xauthority:/root/.Xauthority:ro
       
     environment:
       - ROS_DOMAIN_ID=67
       - DISPLAY=$DISPLAY
       - QT_X11_NO_MITSHM=1
+      - XAUTHORITY=/root/.Xauthority
       # Zajištění nebufferovaného výstupu z logů
       - RCUTILS_LOGGING_BUFFERED_STREAM=1
       - RCUTILS_COLORIZED_OUTPUT=1
