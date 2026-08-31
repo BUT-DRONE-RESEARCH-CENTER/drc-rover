@@ -7,7 +7,7 @@ namespace drone_follow {
 
 ArucoDetectorNode::ArucoDetectorNode(const rclcpp::NodeOptions & options)
 : Node("aruco_detector_node", options) {
-    this->declare_parameter("marker_size", 0.);
+    this->declare_parameter("marker_size", 0.15);
     this->declare_parameter("dictionary_id", static_cast<int>(cv::aruco::DICT_4X4_250));
 
     marker_size_ = this->get_parameter("marker_size").as_double();

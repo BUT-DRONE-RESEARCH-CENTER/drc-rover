@@ -16,7 +16,7 @@ services:
     
     volumes:
       # Mapování zdrojového kódu (případně celého ws)
-      - ../../src:/workspace/src:rw
+      - ../../docker_ws:/workspace/:rw
 
       # Přístup ke všem zařízením v /dev (ttyACM, ttyUSB, video*, i2c, spi)
       - /dev:/dev:rw
