@@ -15,6 +15,8 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/aruco.hpp>
 
+#include <drone_follow/msg/aruco_marker.hpp>
+
 namespace drone_follow {
 
 class ArucoDetectorNode : public rclcpp::Node {
@@ -35,7 +37,7 @@ private:
     cv::Mat dist_coeffs_;
 
     // ROS 2 komunikace
-    rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pose_pub_;
+    rclcpp::Publisher<drone_follow::msg::ArucoMarker>::SharedPtr aruco_marker_pub_;
     rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr camera_info_sub_;
     rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr image_sub_;
     std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
