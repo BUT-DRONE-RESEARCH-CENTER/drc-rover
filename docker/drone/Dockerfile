@@ -25,6 +25,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN echo "source /opt/ros/humble/setup.bash" >> /root/.bashrc && \
     echo "if [ -f /workspace/install/setup.bash ]; then source /workspace/install/setup.bash; fi" >> /root/.bashrc && \
     echo "alias source_install='source /workspace/install/setup.bash'" >> /root/.bashrc && \
-    echo "alias tkill='tmux kill-session'" >> /root/.bashrc
-
+    echo "alias tkill='tmux kill-session'" >> /root/.bashrc && \    
+    echo "alias cam='ros2 run v4l2_camera v4l2_camera_node --ros-args -p video_device:="/dev/video4" -p image_size:=[1280,800] -p camera_info_url:="file:///workspace/realsense_calib.yaml"'" >> /root/.bashrc
 WORKDIR /workspace
