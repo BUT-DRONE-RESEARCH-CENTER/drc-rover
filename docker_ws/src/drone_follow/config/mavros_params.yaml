@@ -5,10 +5,10 @@
     target_system_id: 1
     target_component_id: 1
     fcu_protocol: "v2.0"
-
+    system_id: 255
+    component_id: 240
     plugin_allowlist:
       - command          # Nutné pro příkazy a dotaz na verzi FCU
       - sys_status       # Systémový stav a Heartbeat
       - sys_time         # Synchronizace času
-      - param            # Načtení základních parametrů z FCU
       - landing_target   # Vlastní target plugin
