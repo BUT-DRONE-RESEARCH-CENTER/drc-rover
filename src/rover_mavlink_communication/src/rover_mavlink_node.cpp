@@ -1,6 +1,7 @@
 #include "../include/rover_mavlink_node.hpp"
 
 #include <algorithm>
+#include <cmath>
 #include <functional>
 
 RoverMavlinkNode::RoverMavlinkNode()
@@ -17,6 +18,23 @@ RoverMavlinkNode::RoverMavlinkNode()
     max_angular_velocity_ = this->get_parameter("max_angular_velocity").as_double();
     heartbeat_timeout_ = this->get_parameter("heartbeat_timeout").as_double();
 
+
+    this->declare_parameter<double>(
+    "local_position_timeout", 1.0);
+
+    local_position_timeout_ =
+        this->get_parameter(
+            "local_position_timeout").as_double();
+
+    local_position_subscriber_ =
+        this->create_subscription<
+            geometry_msgs::msg::PoseStamped>(
+            "/mavros/local_position/pose",
+            rclcpp::SensorDataQoS(),
+            std::bind(
+                &RoverMavlinkNode::localPositionCallback,
+                this,
+                std::placeholders::_1));
 
     // ========================================================
     // ArduPilot interface
@@ -178,4 +196,45 @@ void RoverMavlinkNode::heartbeatCallback()
             heartbeat_triggered_ = true;
         }
     }
+}
+
+void RoverMavlinkNode::localPositionCallback(
+    const geometry_msgs::msg::PoseStamped::SharedPtr msg)
+{
+    const auto & p = msg->pose.position;
+    const auto & q = msg->pose.orientation;
+
+    const bool finite =
+        std::isfinite(p.x) &&
+        std::isfinite(p.y) &&
+        std::isfinite(p.z) &&
+        std::isfinite(q.x) &&
+        std::isfinite(q.y) &&
+        std::isfinite(q.z) &&
+        std::isfinite(q.w);
+
+    if (!finite)
+    {
+        RCLCPP_WARN_THROTTLE(
+            this->get_logger(),
+            *this->get_clock(),
+            2000,
+            "Invalid local position received");
+        return;
+    }
+
+    local_position_received_ = true;
+    last_local_position_time_ = this->now();
+}
+
+bool RoverMavlinkNode::isPositionEstimateValid() const
+{
+    if (!local_position_received_)
+    {
+        return false;
+    }
+
+    return
+        (this->now() - last_local_position_time_).seconds()
+        <= local_position_timeout_;
 }

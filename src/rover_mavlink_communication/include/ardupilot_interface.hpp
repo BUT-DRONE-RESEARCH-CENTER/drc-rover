@@ -25,6 +25,7 @@ public:
     bool isConnected() const;
     bool isArmed() const;
     bool isGuided() const;
+    bool isAutonomous() const;
 
     std::string getMode() const;
 
@@ -47,6 +48,7 @@ private:
 
     bool connected_;
     bool armed_;
+    bool isAutonomous_;
 
     std::string current_mode_;
 };

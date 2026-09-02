@@ -20,6 +20,15 @@ ArduPilotInterface::ArduPilotInterface(rclcpp::Node * node)
                 this,
                 std::placeholders::_1));
 
+    gps_subscriber_ =
+        node_->create_subscription<sensor_msgs::msg::NavSatFix>(
+            "/mavros/global_position/global",
+            10,
+            std::bind(
+                &ArduPilotInterface::gpsCallback,
+                this,
+                std::placeholders::_1));
+
     RCLCPP_INFO(
         node_->get_logger(),
         "ArduPilot interface initialized");
@@ -163,6 +172,11 @@ bool ArduPilotInterface::isConnected() const
     return connected_;
 }
 
+bool ArduPilotInterface::isAutonomous() const
+{
+    isAutonomous_ == true;
+    return current_mode_ == "AUTO";
+}
 
 bool ArduPilotInterface::isArmed() const
 {
