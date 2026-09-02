@@ -2,6 +2,7 @@
 #include <cmath>
 #include <rclcpp/rclcpp.hpp>
 #include <mavros_msgs/msg/landing_target.hpp>
+#include <geometry_msgs/msg/pose_stamped.hpp>
 #include "drone_follow/msg/aruco_marker.hpp"
 
 namespace drone_follow {
@@ -37,7 +38,7 @@ private:
 
         mavros_msgs::msg::LandingTarget landing_msg;
         landing_msg.header = msg->header;
-        landing_msg.target_num = static_cast<uint8_t>(msg->id);
+        landing_msg.target_num = 0;
 
         // 1. Nastavení rámce MAV_FRAME_BODY_FRD (12) přímo pro ArduPilot
         landing_msg.frame = 12; // 12 = MAV_FRAME_BODY_FRD
@@ -53,9 +54,15 @@ private:
             std::sqrt(frd.x * frd.x + frd.y * frd.y + frd.z * frd.z));
         landing_msg.distance = dist;
 
-        // Úhly vynulujeme (ArduPilot je díky position_valid=1 v MAVROS ignoruje)
-        landing_msg.angle[0] = 0.0f;
-        landing_msg.angle[1] = 0.0f;
+        if (frd.z > 0.0) {
+    // Tangens úhlu offsetu v osách X a Y vůči hloubce Z
+        landing_msg.angle[0] = static_cast<float>(std::atan2(frd.x, frd.z)); // angle_x
+        landing_msg.angle[1] = static_cast<float>(std::atan2(frd.y, frd.z)); // angle_y
+        } 
+        else {
+            landing_msg.angle[0] = 0.0f;
+            landing_msg.angle[1] = 0.0f;
+}
 
         pub_landing_target_->publish(landing_msg);
         RCLCPP_INFO(this->get_logger(), "Target 3D sent | Frame: 12 | Dist: %.2f m", dist);

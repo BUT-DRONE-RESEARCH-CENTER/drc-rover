@@ -12,3 +12,7 @@
       - sys_status       # Systémový stav a Heartbeat
       - sys_time         # Synchronizace času
       - landing_target   # Vlastní target plugin
+    
+    landing_target:
+      listen_lt: true
+      mav_frame: "BODY_FRD"
