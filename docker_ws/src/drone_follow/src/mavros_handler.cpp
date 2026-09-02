@@ -18,8 +18,8 @@ public:
             std::bind(&MavrosHandlerNode::arucoCallback, this, std::placeholders::_1));
 
         // Oficiální MAVROS topik pro LandingTarget
-        pub_landing_target_ = this->create_publisher<mavros_msgs::msg::LandingTarget>(
-            "/mavros/landing_target/raw", 10);
+        pub_landing_pose_ = this->create_publisher<geometry_msgs::msg::PoseStamped>(
+            "/mavros/landing_target/pose", 10);
 
         RCLCPP_INFO(this->get_logger(), "MAVROS Handler running. Tracking ID: %d", target_id_);
     }
@@ -29,48 +29,33 @@ private:
         geometry_msgs::msg::Point frd;
         frd.x = -cam.y;  // Forward (X_frd)
         frd.y =  cam.x;  // Right (Y_frd)
-        frd.z =  cam.z;  // Down (Z_frd)
+        frd.z =  -cam.z;  // Down (Z_frd)
         return frd;
     }
 
     void arucoCallback(const drone_follow::msg::ArucoMarker::SharedPtr msg) {
         if (msg->id != target_id_) return;
 
-        mavros_msgs::msg::LandingTarget landing_msg;
-        landing_msg.header = msg->header;
-        landing_msg.target_num = 0;
+        geometry_msgs::msg::Point frd_point = convertCameraToFRD(msg->pose.position);
 
-        // 1. Nastavení rámce MAV_FRAME_BODY_FRD (12) přímo pro ArduPilot
-        landing_msg.frame = 12; // 12 = MAV_FRAME_BODY_FRD
-        landing_msg.type = mavros_msgs::msg::LandingTarget::VISION_FIDUCIAL; // 2 = VISION_FIDUCIAL
+        geometry_msgs::msg::PoseStamped pose_msg;
+        pose_msg.header.stamp = this->now();
+        pose_msg.header.frame_id = "landing_target_0"; // Poslední znak '0' určí target_num = 0!
 
-        // 2. Převod pozice do tělesného rámce dronu (Forward-Right-Down)
-        geometry_msgs::msg::Point frd = convertCameraToFRD(msg->pose.position);
-        landing_msg.pose.position = frd;
-        landing_msg.pose.orientation = msg->pose.orientation;
+        pose_msg.pose.position.x = frd_point.x;
+        pose_msg.pose.position.y = frd_point.y;
+        pose_msg.pose.position.z = frd_point.z;
 
-        // 3. Výpočet vzdálenosti (POVINNÉ pro ArduPilot 3D mode)
-        float dist = static_cast<float>(
-            std::sqrt(frd.x * frd.x + frd.y * frd.y + frd.z * frd.z));
-        landing_msg.distance = dist;
+        pose_msg.pose.orientation = msg->pose.orientation; // Ponecháme orientaci z ArUco detekce
 
-        if (frd.z > 0.0) {
-    // Tangens úhlu offsetu v osách X a Y vůči hloubce Z
-        landing_msg.angle[0] = static_cast<float>(std::atan2(frd.x, frd.z)); // angle_x
-        landing_msg.angle[1] = static_cast<float>(std::atan2(frd.y, frd.z)); // angle_y
-        } 
-        else {
-            landing_msg.angle[0] = 0.0f;
-            landing_msg.angle[1] = 0.0f;
-}
+        pub_landing_pose_->publish(pose_msg);
 
-        pub_landing_target_->publish(landing_msg);
-        RCLCPP_INFO(this->get_logger(), "Target 3D sent | Frame: 12 | Dist: %.2f m", dist);
-}
+        RCLCPP_INFO(this->get_logger(), "Published landing target pose for ID: %d [%.2f, %.2f, %.2f]", msg->id, pose_msg.pose.position.x, pose_msg.pose.position.y, pose_msg.pose.position.z);
+    }
 
     int target_id_;
     rclcpp::Subscription<drone_follow::msg::ArucoMarker>::SharedPtr sub_aruco_;
-    rclcpp::Publisher<mavros_msgs::msg::LandingTarget>::SharedPtr pub_landing_target_;
+    rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pub_landing_pose_;
 };
 
 }  // namespace drone_follow
