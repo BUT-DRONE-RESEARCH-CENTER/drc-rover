@@ -9,8 +9,8 @@ RoverMavlinkNode::RoverMavlinkNode()
     heartbeat_triggered_(false)
 {
     // Parameters
-    this->declare_parameter<double>("max_linear_velocity", 1.0);
-    this->declare_parameter<double>("max_angular_velocity", 1.0);
+    this->declare_parameter<double>("max_linear_velocity", 1000);
+    this->declare_parameter<double>("max_angular_velocity", 100.0);
     this->declare_parameter<double>("heartbeat_timeout", 5.0);
 
     max_linear_velocity_ = this->get_parameter("max_linear_velocity").as_double();

@@ -1,0 +1,24 @@
+ ros2 run mavros mavros_node --ros-args -p fcu_url:=udp://172.17.0.1:14551@14555
+ 
+ ros2 run mavros mavros_node --ros-args -p fcu_url:=serial:///dev/ttyACM0:115200
+ 
+ ros2 run rover_mavlink_communication rover_mavlink_node 
+ 
+./Tools/autotest/sim_vehicle.py -v Rover --map --console --out=udp:172.17.0.1:14551
+
+
+ros2 topic pub --rate 10 \
+/cmd_vel \
+geometry_msgs/msg/Twist \
+"{
+  linear: {
+    x: 0.5,
+    y: 0.0,
+    z: 0.0
+  },
+  angular: {
+    x: 0.0,
+    y: 0.0,
+    z: 0.3
+  }
+}"

@@ -1,10 +1,13 @@
 services:
   drc_rover_container:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ../../
+      dockerfile: docker/rover/Dockerfile
     container_name: drc_rover_container
     restart: unless-stopped
+    
+    # Nutné pro Jetson Orin NX (CUDA / VPI / TensorRT)
+    runtime: nvidia
     
     # Síť a IPC
     network_mode: host
@@ -15,18 +18,18 @@ services:
     privileged: true
     
     volumes:
-      # Mapování zdrojového kódu (případně celého ws)
+      # Mapování zdrojových kódů
       - ../../src/drone_follow:/workspace/src/drone_follow:rw
       - ../../src/rover_drone_following:/workspace/src/rover_drone_following:rw
       - ../../src/rover_mavlink_communication:/workspace/src/rover_mavlink_communication:rw
       - ../../src/rover_navigation:/workspace/src/rover_navigation:rw
       
-      # Přístup ke všem zařízením v /dev (ttyACM, ttyUSB, video*, i2c, spi)
+      # Přístup k zařízením v /dev
       - /dev:/dev:rw
-      # Zachování systémového času z hostitele (důležité pro časové značky zpráv)
+      # Synchronizace času
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
-      # --- X11 GUI přístup ---
+      # GUI přístup přes X11
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
       - ~/.Xauthority:/root/.Xauthority:ro
       
@@ -35,9 +38,7 @@ services:
       - DISPLAY=$DISPLAY
       - QT_X11_NO_MITSHM=1
       - XAUTHORITY=/root/.Xauthority
-      # Zajištění nebufferovaného výstupu z logů
       - RCUTILS_LOGGING_BUFFERED_STREAM=1
       - RCUTILS_COLORIZED_OUTPUT=1
 
-    # Udrží kontejner běžící na pozadí pro připojení přes docker exec
     command: tail -f /dev/null
