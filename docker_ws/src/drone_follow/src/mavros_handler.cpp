@@ -27,8 +27,8 @@ public:
 private:
     geometry_msgs::msg::Point convertCameraToFRD(const geometry_msgs::msg::Point &cam) {
         geometry_msgs::msg::Point frd;
-        frd.x = -cam.y;  // Forward (X_frd)
-        frd.y =  cam.x;  // Right (Y_frd)
+        frd.x =  cam.x;  // Forward (X_frd)
+        frd.y =  -cam.y;  // Right (Y_frd)
         frd.z =  -cam.z;  // Down (Z_frd)
         return frd;
     }

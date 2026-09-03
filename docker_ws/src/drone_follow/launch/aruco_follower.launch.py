@@ -26,7 +26,6 @@ def generate_launch_description():
     mavros_node = Node(
         package='mavros',
         executable='mavros_node',
-        name='mavros',
         output='screen',
         parameters=[mavros_params_path]
     )
