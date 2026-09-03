@@ -44,3 +44,8 @@ colcon build --symlink-install \
   --packages-ignore \
     opencv_tests \
   --cmake-args -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF
+
+colcon build \
+  --packages-ignore \
+    opencv_tests \
+  --cmake-args -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF
