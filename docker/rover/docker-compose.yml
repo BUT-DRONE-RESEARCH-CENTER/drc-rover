@@ -19,6 +19,7 @@ services:
       - ../../src/drone_follow:/workspace/src/drone_follow:rw
       - ../../src/rover_drone_following:/workspace/src/rover_drone_following:rw
       - ../../src/rover_mavlink_communication:/workspace/src/rover_mavlink_communication:rw
+      - ../../src/rover_mavlink_communication_updated:/workspace/src/rover_mavlink_communication_updated:rw
       - ../../src/rover_navigation:/workspace/src/rover_navigation:rw
       #- ../../src/opencv_vision:/workspace/src/opencv_vison:rw
       
