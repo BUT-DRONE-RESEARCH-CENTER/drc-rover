@@ -21,6 +21,7 @@ services:
       - ../../src/rover_mavlink_communication:/workspace/src/rover_mavlink_communication:rw
       - ../../src/rover_mavlink_communication_updated:/workspace/src/rover_mavlink_communication_updated:rw
       - ../../src/rover_navigation:/workspace/src/rover_navigation:rw
+      - ../../src/rf2o_mavros_bridge:/workspace/src/rf2o_mavros_bridge:rw
       
       # Přístup ke všem zařízením v /dev (ttyACM, ttyUSB, video*, i2c, spi)
       - /dev:/dev:rw
