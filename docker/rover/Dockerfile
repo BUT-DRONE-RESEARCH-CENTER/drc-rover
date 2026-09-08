@@ -1,6 +1,6 @@
-#FROM dustynv/ros:humble-desktop-l4t-r36.4.0
+FROM dustynv/ros:humble-desktop-l4t-r36.4.0
 #FROM osrf/ros:humble-desktop
-FROM osrf/ros:humble-desktop-jammy
+#FROM osrf/ros:humble-desktop-jammy
 #FROM dustynv/ros:humble-ros-base
 #FROM ubuntu:22.04
 #FROM --platform=linux/arm64 osrf/ros:humble-desktop
