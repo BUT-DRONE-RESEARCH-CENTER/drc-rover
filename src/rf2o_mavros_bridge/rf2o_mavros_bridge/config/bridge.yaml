@@ -1,0 +1,12 @@
+rf2o_mavros_bridge:
+  ros__parameters:
+    rf2o_topic: /odom_rf2o
+    mavros_odom_topic: /mavros/odometry/in
+    velocity_input_topic: /cmd_vel
+    mavros_velocity_topic: /mavros/setpoint_velocity/cmd_vel
+    odom_frame_id: odom
+    child_frame_id: base_link
+    velocity_frame_id: base_link
+    max_linear_velocity: 1.0
+    max_angular_velocity: 1.0
+    watchdog_timeout: 0.5
