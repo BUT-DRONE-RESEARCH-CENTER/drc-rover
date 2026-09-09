@@ -1,5 +1,42 @@
 # ROS 2 Rover
 
+## Quick Start Guide
+0. Thank me later (Sourcing)
+```bash
+source /install/setup.bash
+source /opt/ros/humble/install/setup.bash
+```
+1. Start the mavros node (with specific fcu)
+```bash
+ros2 run mavros mavros_node --ros-args -p fcu_url:=serial:///dev/ttyACM0:115200
+```
+2. Start the mavlink communication node
+```bash
+ros2 launch rf2o_mavros_bridge bridge.launch.py 
+```
+3. Start the RPlidar
+```bash
+ros2 launch rplidar ... (dont remeber)
+```
+4. Try to send /cmd_vel command
+```bash
+ros2 topic pub --rate 10 \
+/cmd_vel \
+geometry_msgs/msg/Twist \
+"{
+  linear: {
+    x: 0.5,
+    y: 0.0,
+    z: 0.0
+  },
+  angular: {
+    x: 0.0,
+    y: 0.0,
+    z: 0.3
+  }
+}"
+```
+
 ROS 2 Humble workspace for the Rover project.
 
 ## Packages
