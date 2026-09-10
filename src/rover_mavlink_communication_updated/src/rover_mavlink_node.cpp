@@ -1,6 +1,7 @@
 #include "rover_mavlink_node.hpp"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <functional>
 #include <stdexcept>
@@ -37,6 +38,9 @@ RoverMavlinkNode::RoverMavlinkNode()
     rf2o_topic_ = declare_parameter<std::string>("rf2o_topic", "/odom_rf2o");
     mavros_odometry_topic_ = declare_parameter<std::string>(
         "mavros_odometry_topic", "/mavros/odometry/out");
+    odom_frame_id_ = declare_parameter<std::string>("odom_frame_id", "odom");
+    child_frame_id_ = declare_parameter<std::string>("child_frame_id", "base_link");
+    target_odom_rate_hz_ = declare_parameter<double>("target_odom_rate_hz", 6.0);
 
     this->declare_parameter<double>(
     "local_position_timeout", 1.0);
@@ -99,7 +103,7 @@ RoverMavlinkNode::RoverMavlinkNode()
 
     rf2o_subscriber_ = create_subscription<nav_msgs::msg::Odometry>(
         rf2o_topic_,
-        10,
+        rclcpp::SensorDataQoS(),
         std::bind(&RoverMavlinkNode::rf2oCallback, this, std::placeholders::_1));
 
     if (forward_rf2o_to_mavros_)
@@ -221,11 +225,43 @@ void RoverMavlinkNode::rf2oCallback(
 
     if (mavros_odometry_publisher_)
     {
-        nav_msgs::msg::Odometry forwarded = *msg;
-        if (forwarded.header.stamp.sec == 0 && forwarded.header.stamp.nanosec == 0U)
+        const auto current_time = now();
+        const double min_interval =
+            (target_odom_rate_hz_ > 0.0) ? (1.0 / target_odom_rate_hz_) : 0.0;
+
+        if (min_interval > 0.0 &&
+            (current_time - last_odom_publish_time_).seconds() < min_interval)
         {
-            forwarded.header.stamp = now();
+            return;
         }
+        last_odom_publish_time_ = current_time;
+
+        nav_msgs::msg::Odometry forwarded = *msg;
+
+        // Zero timestamp forces ArduPilot FCU to stamp with onboard time
+        forwarded.header.stamp = rclcpp::Time(0, 0, RCL_ROS_TIME);
+        forwarded.header.frame_id = odom_frame_id_;
+        forwarded.child_frame_id = child_frame_id_;
+
+        // Fill non-zero diagonal covariance 6x6 required by ArduPilot EKF3
+        std::array<double, 36> pose_cov = {0.0};
+        pose_cov[0]  = 0.01;  // X var [m^2]
+        pose_cov[7]  = 0.01;  // Y var [m^2]
+        pose_cov[14] = 0.10;  // Z var [m^2]
+        pose_cov[21] = 0.05;  // Roll var [rad^2]
+        pose_cov[28] = 0.05;  // Pitch var [rad^2]
+        pose_cov[35] = 0.02;  // Yaw var [rad^2]
+        forwarded.pose.covariance = pose_cov;
+
+        std::array<double, 36> twist_cov = {0.0};
+        twist_cov[0]  = 0.02; // Vx
+        twist_cov[7]  = 0.02; // Vy
+        twist_cov[14] = 0.10; // Vz
+        twist_cov[21] = 0.05; // dRoll
+        twist_cov[28] = 0.05; // dPitch
+        twist_cov[35] = 0.05; // dYaw
+        forwarded.twist.covariance = twist_cov;
+
         mavros_odometry_publisher_->publish(forwarded);
     }
 }

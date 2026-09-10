@@ -106,6 +106,11 @@ private:
 
     std::string rf2o_topic_;
     std::string mavros_odometry_topic_;
+    std::string odom_frame_id_{"odom"};
+    std::string child_frame_id_{"base_link"};
+
+    double target_odom_rate_hz_{6.0};
+    rclcpp::Time last_odom_publish_time_{0, 0, RCL_ROS_TIME};
 
     AutonomousState autonomous_state_;
 };
