@@ -48,7 +48,6 @@ private:
 
     bool connected_;
     bool armed_;
-    bool isAutonomous_;
 
     std::string current_mode_;
 };

@@ -9,8 +9,13 @@
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/transform_stamped.hpp>
 
+#if __has_include(<tf2_ros/buffer.hpp>)
 #include <tf2_ros/buffer.hpp>
 #include <tf2_ros/transform_listener.hpp>
+#else
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.h>
+#endif
 
 
 class ExternalPosePublisher

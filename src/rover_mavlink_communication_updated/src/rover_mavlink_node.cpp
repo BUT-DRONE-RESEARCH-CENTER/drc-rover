@@ -4,7 +4,6 @@
 #include <cmath>
 #include <functional>
 #include <stdexcept>
-#include <cmath>
 
 RoverMavlinkNode::RoverMavlinkNode()
     : Node("rover_mavlink_node"),
@@ -84,10 +83,10 @@ RoverMavlinkNode::RoverMavlinkNode()
         10,
         std::bind(&RoverMavlinkNode::velocityCallback, this, std::placeholders::_1));
 
-    // autonomous_subscriber_ = create_subscription<std_msgs::msg::Bool>(
-    //     "/autonomous_enabled",
-    //     10,
-    //     std::bind(&RoverMavlinkNode::autonomousCallback, this, std::placeholders::_1));
+    autonomous_subscriber_ = create_subscription<std_msgs::msg::Bool>(
+        "/autonomous_enabled",
+        10,
+        std::bind(&RoverMavlinkNode::autonomousCallback, this, std::placeholders::_1));
 
     // estimator_status_subscriber_ =
     //     create_subscription<mavros_msgs::msg::EstimatorStatus>(
@@ -157,33 +156,33 @@ void RoverMavlinkNode::velocityCallback(
         angular_velocity);
 }
 
-// void RoverMavlinkNode::autonomousCallback(
-//     const std_msgs::msg::Bool::SharedPtr msg)
-// {
-//     if (autonomous_enabled_ == msg->data)
-//     {
-//         return;
-//     }
+void RoverMavlinkNode::autonomousCallback(
+    const std_msgs::msg::Bool::SharedPtr msg)
+{
+    if (autonomous_enabled_ == msg->data)
+    {
+        return;
+    }
 
-//     autonomous_enabled_ = msg->data;
-//     arm_attempts_ = 0;
-//     heartbeat_triggered_ = false;
+    autonomous_enabled_ = msg->data;
+    arm_attempts_ = 0;
+    heartbeat_triggered_ = false;
 
-//     RCLCPP_INFO(
-//         get_logger(),
-//         "Autonomous operation %s",
-//         autonomous_enabled_ ? "requested" : "disabled");
+    RCLCPP_INFO(
+        get_logger(),
+        "Autonomous operation %s",
+        autonomous_enabled_ ? "requested" : "disabled");
 
-//     if (autonomous_enabled_)
-//     {
-//         autonomous_state_ = AutonomousState::IDLE;
-//     }
-//     else
-//     {
-//         ardupilot_->stop();
-//         autonomous_state_ = AutonomousState::REQUEST_MANUAL;
-//     }
-// }
+    if (autonomous_enabled_)
+    {
+        autonomous_state_ = AutonomousState::IDLE;
+    }
+    else
+    {
+        ardupilot_->stop();
+        autonomous_state_ = AutonomousState::REQUEST_MANUAL;
+    }
+}
 
 // void RoverMavlinkNode::estimatorStatusCallback(
 //     const mavros_msgs::msg::EstimatorStatus::SharedPtr msg)

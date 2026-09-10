@@ -41,8 +41,7 @@ private:
     };
 
     void velocityCallback(const geometry_msgs::msg::Twist::SharedPtr msg);
-    // void autonomousCallback(const std_msgs::msg::Bool::SharedPtr msg);
-    // void estimatorStatusCallback(const mavros_msgs::msg::EstimatorStatus::SharedPtr msg);
+    void autonomousCallback(const std_msgs::msg::Bool::SharedPtr msg);
     void rf2oCallback(const nav_msgs::msg::Odometry::SharedPtr msg);
 
     void heartbeatCallback();
