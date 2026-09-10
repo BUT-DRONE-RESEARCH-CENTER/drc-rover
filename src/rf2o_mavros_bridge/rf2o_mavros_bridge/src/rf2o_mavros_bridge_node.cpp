@@ -1,10 +1,11 @@
 #include <algorithm>
+#include <array>
 #include <chrono>
 #include <functional>
 #include <memory>
 #include <string>
-#include <array>
 
+#include "geographic_msgs/msg/geo_point_stamped.hpp"
 #include "geometry_msgs/msg/twist.hpp"
 #include "geometry_msgs/msg/twist_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
@@ -23,6 +24,8 @@ public:
     const auto rf2o_topic = declare_parameter<std::string>("rf2o_topic", "/odom_rf2o");
     const auto mavros_odom_topic =
       declare_parameter<std::string>("mavros_odom_topic", "/mavros/odometry/out");
+    const auto origin_topic =
+      declare_parameter<std::string>("origin_topic", "/mavros/global_position/set_gp_origin");
     const auto velocity_input_topic =
       declare_parameter<std::string>("velocity_input_topic", "/cmd_vel");
     const auto mavros_velocity_topic = declare_parameter<std::string>(
@@ -40,9 +43,16 @@ public:
     // Omezení frekvence pro odlehčení ELRS linky
     target_odom_rate_hz_ = declare_parameter<double>("target_odom_rate_hz", 6.0);
 
+    // Souřadnice pro EKF Origin (výchozí: Brno)
+    origin_lat_ = declare_parameter<double>("origin_lat", 49.22836);
+    origin_lon_ = declare_parameter<double>("origin_lon", 16.57265);
+    origin_alt_ = declare_parameter<double>("origin_alt", 250.0);
+
     odom_pub_ = create_publisher<nav_msgs::msg::Odometry>(mavros_odom_topic, 10);
     velocity_pub_ =
       create_publisher<geometry_msgs::msg::TwistStamped>(mavros_velocity_topic, 10);
+    origin_pub_ =
+      create_publisher<geographic_msgs::msg::GeoPointStamped>(origin_topic, 10);
 
     odom_sub_ = create_subscription<nav_msgs::msg::Odometry>(
       rf2o_topic, rclcpp::SensorDataQoS(),
@@ -53,15 +63,29 @@ public:
       std::bind(&Rf2oMavrosBridge::velocityCallback, this, std::placeholders::_1));
 
     watchdog_timer_ = create_wall_timer(50ms, std::bind(&Rf2oMavrosBridge::watchdog, this));
+    
+    // Periodické odesílání Originu (1 Hz)
+    origin_timer_ = create_wall_timer(1s, std::bind(&Rf2oMavrosBridge::publishOrigin, this));
 
     RCLCPP_INFO(
       get_logger(),
-      "RF2O %s -> %s (max %.1f Hz); velocity %s -> %s",
+      "RF2O %s -> %s (max %.1f Hz); velocity %s -> %s; Origin auto-pub active (1 Hz)",
       rf2o_topic.c_str(), mavros_odom_topic.c_str(), target_odom_rate_hz_,
       velocity_input_topic.c_str(), mavros_velocity_topic.c_str());
   }
 
 private:
+  void publishOrigin()
+  {
+    geographic_msgs::msg::GeoPointStamped origin;
+    origin.header.stamp = now();
+    origin.header.frame_id = "map";
+    origin.position.latitude = origin_lat_;
+    origin.position.longitude = origin_lon_;
+    origin.position.altitude = origin_alt_;
+    origin_pub_->publish(origin);
+  }
+
   void odometryCallback(const nav_msgs::msg::Odometry::SharedPtr input)
   {
     const auto current_time = now();
@@ -143,6 +167,10 @@ private:
   double watchdog_timeout_;
   double target_odom_rate_hz_{6.0};
 
+  double origin_lat_{49.22836};
+  double origin_lon_{16.57265};
+  double origin_alt_{250.0};
+
   bool velocity_received_{false};
   bool stop_sent_{false};
   rclcpp::Time last_velocity_time_;
@@ -152,7 +180,9 @@ private:
   rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr velocity_sub_;
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
   rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr velocity_pub_;
+  rclcpp::Publisher<geographic_msgs::msg::GeoPointStamped>::SharedPtr origin_pub_;
   rclcpp::TimerBase::SharedPtr watchdog_timer_;
+  rclcpp::TimerBase::SharedPtr origin_timer_;
 };
 
 int main(int argc, char ** argv)
