@@ -41,13 +41,16 @@ def generate_launch_description():
     )
 
     # 2. Statická transformace (base_link -> laser)
+    # ZMĚNA: Rotace --yaw o 180 stupňů
+    # Pokud by po spuštění šipka v RViz2 směřovala na opačnou stranu, změň hodnotu na '-1.5708'.
     static_tf_node = Node(
         package='tf2_ros',
         executable='static_transform_publisher',
         name='static_tf_laser',
         arguments=[
             '--x', '0', '--y', '0', '--z', '0',
-            '--roll', '0', '--pitch', '0', '--yaw', '0',
+            '--roll', '0', '--pitch', '0',
+            '--yaw', '3.14159265',
             '--frame-id', 'base_link',
             '--child-frame-id', 'laser'
         ],
