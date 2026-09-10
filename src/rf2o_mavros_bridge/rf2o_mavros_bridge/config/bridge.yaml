@@ -1,7 +1,7 @@
 rf2o_mavros_bridge:
   ros__parameters:
     rf2o_topic: /odom_rf2o
-    mavros_odom_topic: /mavros/odometry/in
+    mavros_odom_topic: /mavros/odometry/out
     velocity_input_topic: /cmd_vel
     mavros_velocity_topic: /mavros/setpoint_velocity/cmd_vel
     odom_frame_id: odom

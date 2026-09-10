@@ -3,6 +3,7 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <array>
 
 #include "geometry_msgs/msg/twist.hpp"
 #include "geometry_msgs/msg/twist_stamped.hpp"
@@ -18,8 +19,11 @@ public:
   : Node("rf2o_mavros_bridge"), last_velocity_time_(now())
   {
     const auto rf2o_topic = declare_parameter<std::string>("rf2o_topic", "/odom_rf2o");
+    
+    // 1. ZMĚNA: Správný směr pro MAVROS je /mavros/odometry/out
     const auto mavros_odom_topic =
-      declare_parameter<std::string>("mavros_odom_topic", "/mavros/odometry/in");
+      declare_parameter<std::string>("mavros_odom_topic", "/mavros/odometry/out");
+      
     const auto velocity_input_topic =
       declare_parameter<std::string>("velocity_input_topic", "/cmd_vel");
     const auto mavros_velocity_topic = declare_parameter<std::string>(
@@ -60,6 +64,28 @@ private:
     auto output = *input;
     output.header.frame_id = odom_frame_id_;
     output.child_frame_id = child_frame_id_;
+
+    // 2. ZMĚNA: Vyplnění nenulové diagonály kovariance 6x6 (36 prvků)
+    // Indexy diagonály: 0 (X), 7 (Y), 14 (Z), 21 (Roll), 28 (Pitch), 35 (Yaw)
+    std::array<double, 36> pose_cov = {0.0};
+    pose_cov[0]  = 0.01;  // X var [m^2]
+    pose_cov[7]  = 0.01;  // Y var [m^2]
+    pose_cov[14] = 0.10;  // Z var [m^2]
+    pose_cov[21] = 0.05;  // Roll var [rad^2]
+    pose_cov[28] = 0.05;  // Pitch var [rad^2]
+    pose_cov[35] = 0.02;  // Yaw var [rad^2]
+    output.pose.covariance = pose_cov;
+
+    // Pokud rf2o vyplňuje lineární rychlosti, doplníme kovarianci i pro twist
+    std::array<double, 36> twist_cov = {0.0};
+    twist_cov[0]  = 0.02; // Vx
+    twist_cov[7]  = 0.02; // Vy
+    twist_cov[14] = 0.10; // Vz
+    twist_cov[21] = 0.05; // dRoll
+    twist_cov[28] = 0.05; // dPitch
+    twist_cov[35] = 0.05; // dYaw
+    output.twist.covariance = twist_cov;
+
     odom_pub_->publish(output);
   }
 
@@ -69,7 +95,6 @@ private:
     output.header.stamp = now();
     output.header.frame_id = velocity_frame_id_;
 
-    // Differential rover command: v = linear.x, w = angular.z.
     output.twist.linear.x = std::clamp(
       input->linear.x, -max_linear_velocity_, max_linear_velocity_);
     output.twist.angular.z = std::clamp(
