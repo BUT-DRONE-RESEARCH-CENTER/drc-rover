@@ -78,7 +78,8 @@ private:
   void publishOrigin()
   {
     geographic_msgs::msg::GeoPointStamped origin;
-    origin.header.stamp = now();
+    // Nulové razítko zabrání odmítnutí zprávy kvůli rozdílu hodin
+    origin.header.stamp = rclcpp::Time(0, 0, RCL_ROS_TIME);
     origin.header.frame_id = "map";
     origin.position.latitude = origin_lat_;
     origin.position.longitude = origin_lon_;
@@ -92,13 +93,17 @@ private:
     const double min_interval =
       (target_odom_rate_hz_ > 0.0) ? (1.0 / target_odom_rate_hz_) : 0.0;
 
-    // Pokud od posledního odeslání neuplynula minimální doba periody, zprávu zahodíme
+    // Rate limiter pro ochranu ELRS linky
     if (min_interval > 0.0 && (current_time - last_odom_publish_time_).seconds() < min_interval) {
       return;
     }
     last_odom_publish_time_ = current_time;
 
     auto output = *input;
+
+    // KLÍČOVÉ: Vynulování časové značky. MAVROS pošle time_usec = 0,
+    // což Cube přinutí orazítkovat zprávu vlastním palubním časem
+    output.header.stamp = rclcpp::Time(0, 0, RCL_ROS_TIME);
     output.header.frame_id = odom_frame_id_;
     output.child_frame_id = child_frame_id_;
 
