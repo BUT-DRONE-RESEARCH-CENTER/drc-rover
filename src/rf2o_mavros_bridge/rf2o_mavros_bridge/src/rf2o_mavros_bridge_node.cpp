@@ -34,6 +34,18 @@ public:
       declare_parameter<double>("max_angular_velocity", 1.0);
     watchdog_timeout_ = declare_parameter<double>("watchdog_timeout", 0.5);
 
+ 	 // Parametry kovariancí pro Pose (rozptyl / nejistota)
+     pose_cov_xy_ = declare_parameter<double>("pose_cov_xy", 0.01);
+     pose_cov_z_ = declare_parameter<double>("pose_cov_z", 99999.0);
+     pose_cov_roll_pitch_ = declare_parameter<double>("pose_cov_roll_pitch", 99999.0);
+     pose_cov_yaw_ = declare_parameter<double>("pose_cov_yaw", 0.02);
+ 
+     // Parametry kovariancí pro Twist
+     twist_cov_vx_vy_ = declare_parameter<double>("twist_cov_vx_vy", 0.01);
+     twist_cov_vz_ = declare_parameter<double>("twist_cov_vz", 99999.0);
+     twist_cov_wx_wy_ = declare_parameter<double>("twist_cov_wx_wy", 99999.0);
+     twist_cov_wz_ = declare_parameter<double>("twist_cov_wz", 0.02);
+
     odom_pub_ = create_publisher<nav_msgs::msg::Odometry>(mavros_odom_topic, 10);
     velocity_pub_ =
       create_publisher<geometry_msgs::msg::TwistStamped>(mavros_velocity_topic, 10);
@@ -55,13 +67,32 @@ public:
   }
 
 private:
-  void odometryCallback(const nav_msgs::msg::Odometry::SharedPtr input)
-  {
-    auto output = *input;
-    output.header.frame_id = odom_frame_id_;
-    output.child_frame_id = child_frame_id_;
-    odom_pub_->publish(output);
-  }
+	void odometryCallback(const nav_msgs::msg::Odometry::SharedPtr input)
+	{
+	  auto output = *input;
+	  output.header.frame_id = odom_frame_id_;
+	  output.child_frame_id = child_frame_id_;
+
+	  // Nastavení diagonály kovariance pro POSE [x, y, z, roll, pitch, yaw]
+	  output.pose.covariance.fill(0.0);
+	  output.pose.covariance[0]  = 0.01;    // x (variance m^2)
+	  output.pose.covariance[7]  = 0.01;    // y
+	  output.pose.covariance[14] = 99999.0; // z (neuvedeno v 2D)
+	  output.pose.covariance[21] = 99999.0; // roll
+	  output.pose.covariance[28] = 99999.0; // pitch
+	  output.pose.covariance[35] = 0.02;    // yaw (variance rad^2)
+
+	  // Nastavení diagonály kovariance pro TWIST [vx, vy, vz, wx, wy, wz]
+	  output.twist.covariance.fill(0.0);
+	  output.twist.covariance[0]  = 0.01;   // linear x
+	  output.twist.covariance[7]  = 0.01;   // linear y
+	  output.twist.covariance[14] = 99999.0;
+	  output.twist.covariance[21] = 99999.0;
+	  output.twist.covariance[28] = 99999.0;
+	  output.twist.covariance[35] = 0.02;   // angular z
+
+	  odom_pub_->publish(output);
+	}
 
   void velocityCallback(const geometry_msgs::msg::Twist::SharedPtr input)
   {
@@ -109,11 +140,24 @@ private:
   bool stop_sent_{false};
   rclcpp::Time last_velocity_time_;
 
+
+  double pose_cov_xy_;
+  double pose_cov_z_;
+  double pose_cov_roll_pitch_;
+  double pose_cov_yaw_;
+  double twist_cov_vx_vy_;
+  double twist_cov_vz_;
+  double twist_cov_wx_wy_;
+  double twist_cov_wz_;
+
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
   rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr velocity_sub_;
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
   rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr velocity_pub_;
   rclcpp::TimerBase::SharedPtr watchdog_timer_;
+
+
+  
 };
 
 int main(int argc, char ** argv)
