@@ -16,14 +16,13 @@ class Rf2oMavrosBridge : public rclcpp::Node
 {
 public:
   Rf2oMavrosBridge()
-  : Node("rf2o_mavros_bridge"), last_velocity_time_(now())
+  : Node("rf2o_mavros_bridge"),
+    last_velocity_time_(now()),
+    last_odom_publish_time_(now())
   {
     const auto rf2o_topic = declare_parameter<std::string>("rf2o_topic", "/odom_rf2o");
-    
-    // 1. ZMĚNA: Správný směr pro MAVROS je /mavros/odometry/out
     const auto mavros_odom_topic =
       declare_parameter<std::string>("mavros_odom_topic", "/mavros/odometry/out");
-      
     const auto velocity_input_topic =
       declare_parameter<std::string>("velocity_input_topic", "/cmd_vel");
     const auto mavros_velocity_topic = declare_parameter<std::string>(
@@ -37,6 +36,9 @@ public:
     max_angular_velocity_ =
       declare_parameter<double>("max_angular_velocity", 1.0);
     watchdog_timeout_ = declare_parameter<double>("watchdog_timeout", 0.5);
+
+    // Omezení frekvence pro odlehčení ELRS linky
+    target_odom_rate_hz_ = declare_parameter<double>("target_odom_rate_hz", 6.0);
 
     odom_pub_ = create_publisher<nav_msgs::msg::Odometry>(mavros_odom_topic, 10);
     velocity_pub_ =
@@ -53,20 +55,30 @@ public:
     watchdog_timer_ = create_wall_timer(50ms, std::bind(&Rf2oMavrosBridge::watchdog, this));
 
     RCLCPP_INFO(
-      get_logger(), "RF2O %s -> %s; velocity %s -> %s",
-      rf2o_topic.c_str(), mavros_odom_topic.c_str(), velocity_input_topic.c_str(),
-      mavros_velocity_topic.c_str());
+      get_logger(),
+      "RF2O %s -> %s (max %.1f Hz); velocity %s -> %s",
+      rf2o_topic.c_str(), mavros_odom_topic.c_str(), target_odom_rate_hz_,
+      velocity_input_topic.c_str(), mavros_velocity_topic.c_str());
   }
 
 private:
   void odometryCallback(const nav_msgs::msg::Odometry::SharedPtr input)
   {
+    const auto current_time = now();
+    const double min_interval =
+      (target_odom_rate_hz_ > 0.0) ? (1.0 / target_odom_rate_hz_) : 0.0;
+
+    // Pokud od posledního odeslání neuplynula minimální doba periody, zprávu zahodíme
+    if (min_interval > 0.0 && (current_time - last_odom_publish_time_).seconds() < min_interval) {
+      return;
+    }
+    last_odom_publish_time_ = current_time;
+
     auto output = *input;
     output.header.frame_id = odom_frame_id_;
     output.child_frame_id = child_frame_id_;
 
-    // 2. ZMĚNA: Vyplnění nenulové diagonály kovariance 6x6 (36 prvků)
-    // Indexy diagonály: 0 (X), 7 (Y), 14 (Z), 21 (Roll), 28 (Pitch), 35 (Yaw)
+    // Vyplnění nenulové diagonály kovariance 6x6
     std::array<double, 36> pose_cov = {0.0};
     pose_cov[0]  = 0.01;  // X var [m^2]
     pose_cov[7]  = 0.01;  // Y var [m^2]
@@ -76,7 +88,6 @@ private:
     pose_cov[35] = 0.02;  // Yaw var [rad^2]
     output.pose.covariance = pose_cov;
 
-    // Pokud rf2o vyplňuje lineární rychlosti, doplníme kovarianci i pro twist
     std::array<double, 36> twist_cov = {0.0};
     twist_cov[0]  = 0.02; // Vx
     twist_cov[7]  = 0.02; // Vy
@@ -130,9 +141,12 @@ private:
   double max_linear_velocity_;
   double max_angular_velocity_;
   double watchdog_timeout_;
+  double target_odom_rate_hz_{6.0};
+
   bool velocity_received_{false};
   bool stop_sent_{false};
   rclcpp::Time last_velocity_time_;
+  rclcpp::Time last_odom_publish_time_;
 
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
   rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr velocity_sub_;
